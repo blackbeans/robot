@@ -17,6 +17,7 @@ func main() {
 	mobile := flag.String("mobile", "", "-mobile=1862222222")
 	password := flag.String("password", "", "-password=1234")
 	robotType := flag.String("robotType", "higo", "-robotType=higo or ymt")
+	message := flag.String("message", "", "-message=hi")
 
 	flag.Parse()
 	log.LoadConfiguration("./log.xml")
@@ -39,7 +40,7 @@ func main() {
 	} else {
 		line.RegisteHandler("login", ymt.NewLoginHandler("login", "http://app.ymatou.com/api/Auth/LoginAuth"))
 		line.RegisteHandler("activities", ymt.NewChannelHandler("activities", "http://app.ymatou.com/api/activity/GetCountryGroupList"))
-		line.RegisteHandler("im", ymt.NewPublishHandler("im", "http://app.ymatou.com/api/Letter/AddMessage", "hi"))
+		line.RegisteHandler("im", ymt.NewPublishHandler("im", "http://app.ymatou.com/api/Letter/AddMessage", *message))
 
 		req := &ymt.LoginReq{}
 		req.Username = *mobile
