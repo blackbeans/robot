@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"robot/core"
+	"robot/higo"
 	"time"
 
 	"github.com/blackbeans/go-uuid"
@@ -22,12 +22,12 @@ func main() {
 		Addr: *redisHost})
 
 	line := pipe.NewDefaultPipeline()
-	line.RegisteHandler("login", core.NewLoginHandler("login", "http://v.lehe.com/account/login"))
-	line.RegisteHandler("shop_channel", core.NewChannelHandler("shop_channel", "http://v.lehe.com/shop/get_dimensions"))
-	line.RegisteHandler("shop_more", core.NewShopMoreHandler("shop_more", "http://v.lehe.com/shop/get_more", redisclient))
-	line.RegisteHandler("shop_follow", core.NewShopFollowHandler("shop_follow", "http://im.lehe.com/im/open_group_add", redisclient))
+	line.RegisteHandler("login", higo.NewLoginHandler("login", "http://v.lehe.com/account/login"))
+	line.RegisteHandler("shop_channel", higo.NewChannelHandler("shop_channel", "http://v.lehe.com/shop/get_dimensions"))
+	line.RegisteHandler("shop_more", higo.NewShopMoreHandler("shop_more", "http://v.lehe.com/shop/get_more", redisclient))
+	line.RegisteHandler("shop_follow", higo.NewShopFollowHandler("shop_follow", "http://im.lehe.com/im/open_group_add", redisclient))
 
-	req := &core.LoginReq{}
+	req := &higo.LoginReq{}
 	req.IDFA = "84FBA21D-C514-4D0E-82BE-1831912A0963"
 	req.Mobile = *mobile
 	req.OpenUdid = uuid.NewRandom().String()

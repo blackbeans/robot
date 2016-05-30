@@ -1,4 +1,4 @@
-package core
+package ymt
 
 import (
 	"bytes"
@@ -15,36 +15,31 @@ import (
 	"github.com/blackbeans/go-uuid"
 )
 
-type HigoCookie struct {
-	App         string `uri:"app"`
-	AccessToken string `uri:"access_token"`
-	ClientId    int    `uri:"client_id"`
-	Cver        string `uri:"cver"`
-	DeviceId    string `uri:"device_id"`
-	GetConfig   string `uri:"getConfig"`
-	Qudaoid     int    `uri:"qudaoid"`
-	Source      string `uri:"source"`
-
-	Backup      int     `uri:"backup"`
-	DeviceToken string  `uri:"device_token"`
-	IDFA        string  `uri:"idfa"`
-	OpenUdid    string  `uri:"open_udid"`
-	Ver         float32 `uri:"ver"`
-	Via         string  `uri:"via"`
-	UUID        string  `uri:"uuid"`
+type YmtCookie struct {
+	DeviceId    string `uri:"DeviceId"`
+	CKId        string `uri:"CKId"`
+	ClientType  string `uri:"ClientType"`
+	CookieId    string `uri:"Cookieid"`
+	WIFI        string `uri:"WIFI"`
+	DeviceToken string `uri:"DeviceToken"`
+	ClientId    string `uri:"ClientId"`
+	IDFA        string `uri:"IDFA"`
+	Guid        string `uri:"Guid"`
+	VersionInfo string `uri:"versionInfo"`
+	AppName     string `uri:"AppName"`
+	Yid         string `uri:"yid"`
+	AccessToken string `uri:"AccessToken"`
 }
 
 type BaseResp struct {
-	Code    int             `json:"code"`
-	Message string          `json:"message"`
-	Data    json.RawMessage `json:"data"`
+	Status  int             `json:"Status"`
+	Message string          `json:"Msg"`
+	Result  json.RawMessage `json:"Result"`
 }
 
-type HigoSession struct {
-	HigoCookie
-	MlsUserId     string
-	AccountId     string
-	AccountMobile string
+type YmtSession struct {
+	YmtCookie
+	UserId int64 `uri:"UserId"`
 }
 
 func WrapReq2Buff(greq interface{}) *bytes.Buffer {
@@ -95,7 +90,7 @@ func WrapBuff2HttpRequest(method string, url string, buff *bytes.Buffer) *http.R
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("User-Agent", "HIGO/5.0.0 (iPhone; iOS 9.3.2; Scale/3.00)")
+	req.Header.Add("User-Agent", "Ymt/5.0.0 (iPhone; iOS 9.3.2; Scale/3.00)")
 	return req
 }
 
@@ -121,7 +116,7 @@ func HttpReq(client *http.Client, method string, url string, req interface{}) (*
 	// log.DebugLog("robot_handler", "ShopMoreHandler|Open|%s", buff.String())
 
 	httpreq := WrapBuff2HttpRequest(method, url, buff)
-
+	// fmt.Println(buff.String())
 	r, err := client.Do(httpreq)
 	if nil != err {
 		log.ErrorLog("robot_handler", "HttpReq|Try Open |FAIL|%s|%v", err, httpreq.PostForm)
