@@ -1,10 +1,11 @@
-package robot
+package core
 
 import (
 	"encoding/json"
+	"net/http"
+
 	log "github.com/blackbeans/log4go"
 	"github.com/blackbeans/turbo/pipe"
-	"net/http"
 )
 
 type HigoAccountReq struct {
@@ -91,26 +92,10 @@ func (self *LoginHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe.I
 	context := &RobotContext{}
 	context.client = c
 
-	//try login
-	buff := WrapReq2Buff(*ae)
-
-	// log.DebugLog("robot_handler", "LoginHandler|Login|%s", buff.String())
-	req := WrapBuff2HttpRequest(self.url, buff)
-
-	r, err := c.Do(req)
-	if nil != err {
-		log.ErrorLog("robot_handler", "LoginHandler|Try Login |FAIL|%s|%v", err, req.PostForm)
-		return err
-	}
-
-	resp, err := UnmarshalResponse(r)
-	if nil != err {
-		log.ErrorLog("robot_handler", "LoginHandler|Try Login|UnmarshalResponse |FAIL|%s|%v", err, req.PostForm)
-		return err
-	}
+	resp, err := HttpReq(c, "POST", self.url, *ae)
 
 	//if code eq 0 ,login success
-	if resp.Code == 0 {
+	if nil == err && resp.Code == 0 {
 
 		var lresp LoginResp
 		//get token
@@ -130,22 +115,9 @@ func (self *LoginHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe.I
 		hareq.AccountId = lresp.AccountInfo.AccountId
 
 		//try mls_user_id
-		buff := WrapReq2Buff(*hareq)
-		log.DebugLog("robot_handler", "LoginHandler|HigoAccountReq|%s", buff.String())
-		req = WrapBuff2HttpRequest("http://v.lehe.com/account/GetHigoAccountId2MlsUserIdMap", buff)
-		r, err := c.Do(req)
-		if nil != err {
-			log.ErrorLog("robot_handler", "LoginHandler|Try HigoAccountReq|FAIL|%s|%v", err, req.PostForm)
-			return err
-		}
+		resp, err := HttpReq(c, "POST", "http://v.lehe.com/account/GetHigoAccountId2MlsUserIdMap", *hareq)
 
-		resp, err = UnmarshalResponse(r)
-		if nil != err {
-			log.ErrorLog("robot_handler", "LoginHandler|Try HigoAccountReq|UnmarshalResponse |FAIL|%s|%v", err, req.PostForm)
-			return err
-		}
-
-		if resp.Code == 0 {
+		if nil == err && resp.Code == 0 {
 
 			var haresp HigoAccountResp
 			//get token
@@ -164,11 +136,11 @@ func (self *LoginHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe.I
 			session.MlsUserId = haresp.Body[0].MlsUserId
 			context.session = session
 
-			//open im
-			openIm := &OpenImReq{}
-			openIm.ctx = context
-
-			ctx.SendForward(openIm)
+			//crawl channel
+			channelReq := &ChannelReq{}
+			channelReq.HigoSession = *session
+			channelReq.ctx = context
+			ctx.SendForward(channelReq)
 
 		} else {
 			log.WarnLog("robot_handler", "LoginHandler|Login|FAIL|HigoAccountReq|%s", resp.Message)

@@ -1,14 +1,18 @@
-package robot
+package core
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/blackbeans/go-uuid"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
+
+	log "github.com/blackbeans/log4go"
+
+	"github.com/blackbeans/go-uuid"
 )
 
 type HigoCookie struct {
@@ -80,11 +84,18 @@ func WrapReq2Buff(greq interface{}) *bytes.Buffer {
 	return s
 }
 
-func WrapBuff2HttpRequest(url string, buff *bytes.Buffer) *http.Request {
-	req, _ := http.NewRequest("POST", url, buff)
+func WrapBuff2HttpRequest(method string, url string, buff *bytes.Buffer) *http.Request {
+	var req *http.Request
+	if strings.ToUpper(method) == "GET" {
+		url += "?"
+		url += buff.String()
+		req, _ = http.NewRequest(method, url, nil)
+	} else {
+		req, _ = http.NewRequest(method, url, buff)
+	}
+
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("User-Agent", "HIGO/5.0.0 (iPhone; iOS 9.3.2; Scale/3.00)")
-
 	return req
 }
 
@@ -103,6 +114,26 @@ func UnmarshalResponse(resp *http.Response) (BaseResp, error) {
 	}
 
 	return baseResp, nil
+}
+
+func HttpReq(client *http.Client, method string, url string, req interface{}) (*BaseResp, error) {
+	buff := WrapReq2Buff(req)
+	// log.DebugLog("robot_handler", "ShopMoreHandler|Open|%s", buff.String())
+
+	httpreq := WrapBuff2HttpRequest(method, url, buff)
+
+	r, err := client.Do(httpreq)
+	if nil != err {
+		log.ErrorLog("robot_handler", "HttpReq|Try Open |FAIL|%s|%v", err, httpreq.PostForm)
+		return nil, err
+	}
+
+	resp, err := UnmarshalResponse(r)
+	if nil != err {
+		log.ErrorLog("robot_handler", "HttpReq|Try Open|UnmarshalResponse |FAIL|%s|%v", err, httpreq.PostForm)
+		return nil, err
+	}
+	return &resp, nil
 }
 
 //生成messageId uuid
