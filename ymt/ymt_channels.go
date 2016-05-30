@@ -3,7 +3,9 @@ package ymt
 import (
 	"encoding/json"
 
+	"bytes"
 	"math"
+	"time"
 
 	log "github.com/blackbeans/log4go"
 	"github.com/blackbeans/turbo/pipe"
@@ -34,6 +36,20 @@ type ChannelActivityIdsResp struct {
 		ActivityId int64 `json:"ActivityId"`
 	} `json:"Activities"`
 }
+
+type SellerActivityIdsReq struct {
+	YmtSession
+	ActivityIds []int64 `uri:"activityIds",json:"activityIds"`
+}
+
+type SellerActivityIdsResp struct {
+	ActivityCount int `json:"ActivityCount"`
+	Activities    []struct {
+		SellerId int64  `json:"SellerId"`
+		Seller   string `json:"Seller"`
+	} `json:"Activities"`
+}
+
 type ChannelHandler struct {
 	pipe.BaseForwardHandler
 	url string
@@ -103,10 +119,44 @@ func (self *ChannelHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe
 							}
 
 							//get activityInfo
-							log.InfoLog("robot_handler", "ChannelHandler|Start Channel|%v", idarr)
+							// log.InfoLog("robot_handler", "ChannelHandler|Start Channel|%v", idarr)
+
+							//get sellerId
+							sellerReq := &SellerActivityIdsReq{}
+							sellerReq.YmtSession = ae.YmtSession
+							sellerReq.ActivityIds = idarr
+
+							data, _ := json.Marshal(*sellerReq)
+							request := WrapBuff2HttpRequest("POST", "http://app.ymatou.com/api/Activity/ListInProgressActivitiesByIds", bytes.NewBuffer(data))
+							request.Header.Set("Content-Type", "application/json")
+							resp, err = HttpReqAndDecode(ae.ctx.client, request)
+
+							if nil == err && resp.Status == 200 {
+								var sellerResp SellerActivityIdsResp
+								err = json.Unmarshal(resp.Result, &sellerResp)
+								if nil != err {
+									log.WarnLog("robot_handler", "ChannelHandler|ListInProgressActivitiesByIds|Unmarshal|FAIL|%s|%v", err, resp.Result)
+								} else {
+									time.Sleep(2 * time.Second)
+									// log.InfoLog("robot_handler", "ChannelHandler|ListInProgressActivitiesByIds|SUCC|%v", sellerResp)
+									for _, seller := range sellerResp.Activities {
+
+										//send message
+										publishReq := &PublishReq{}
+										publishReq.ctx = ae.ctx
+										publishReq.YmtSession = ae.YmtSession
+										publishReq.ToUserId = seller.SellerId
+										ctx.SendForward(publishReq)
+										time.Sleep(2 * time.Second)
+									}
+								}
+
+							} else {
+								log.WarnLog("robot_handler", "ChannelHandler|ListInProgressActivitiesByIds|FAIL|%v", idarr)
+							}
 
 							pno++
-
+							return nil
 						}
 					}
 				}

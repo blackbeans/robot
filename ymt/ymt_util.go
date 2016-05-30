@@ -16,19 +16,19 @@ import (
 )
 
 type YmtCookie struct {
-	DeviceId    string `uri:"DeviceId"`
-	CKId        string `uri:"CKId"`
-	ClientType  string `uri:"ClientType"`
-	CookieId    string `uri:"Cookieid"`
-	WIFI        string `uri:"WIFI"`
-	DeviceToken string `uri:"DeviceToken"`
-	ClientId    string `uri:"ClientId"`
-	IDFA        string `uri:"IDFA"`
-	Guid        string `uri:"Guid"`
-	VersionInfo string `uri:"versionInfo"`
-	AppName     string `uri:"AppName"`
-	Yid         string `uri:"yid"`
-	AccessToken string `uri:"AccessToken"`
+	DeviceId    string `uri:"DeviceId",json:"DeviceId"`
+	CKId        string `uri:"CKId",json:"CKId"`
+	ClientType  string `uri:"ClientType",json:"ClientType"`
+	CookieId    string `uri:"Cookieid",json:"Cookieid"`
+	WIFI        string `uri:"WIFI",json:"WIFI"`
+	DeviceToken string `uri:"DeviceToken",json:"DeviceToken"`
+	ClientId    string `uri:"ClientId",json:"ClientId"`
+	IDFA        string `uri:"IDFA",json:"IDFA"`
+	Guid        string `uri:"Guid",json:"Guid"`
+	VersionInfo string `uri:"versionInfo",json:"versionInfo"`
+	AppName     string `uri:"AppName",json:"AppName"`
+	Yid         string `uri:"yid",json:"yid"`
+	AccessToken string `uri:"AccessToken",json:"AccessToken"`
 }
 
 type BaseResp struct {
@@ -39,7 +39,7 @@ type BaseResp struct {
 
 type YmtSession struct {
 	YmtCookie
-	UserId int64 `uri:"UserId"`
+	UserId int64 `uri:"UserId",json:"UserId"`
 }
 
 func WrapReq2Buff(greq interface{}) *bytes.Buffer {
@@ -69,6 +69,10 @@ func WrapReq2Buff(greq interface{}) *bytes.Buffer {
 				fs := at.Field(i).Interface().(string)
 				s.WriteString(url.QueryEscape(fs))
 				s.WriteString("&")
+			case reflect.Slice:
+				data, _ := json.Marshal(at.Field(i).Interface())
+				s.WriteString(string(data))
+				s.WriteString("&")
 			}
 
 		} else if f.Type.Kind() == reflect.Struct {
@@ -90,7 +94,8 @@ func WrapBuff2HttpRequest(method string, url string, buff *bytes.Buffer) *http.R
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("User-Agent", "Ymt/5.0.0 (iPhone; iOS 9.3.2; Scale/3.00)")
+	// req.Header.Add("User-Agent", "Ymt/5.0.0 (iPhone; iOS 9.3.2; Scale/3.00)")
+	req.Header.Set("User-Agent", "01ios====9.3.2=e420a82d-9fb9-4f3a-a20a-bc1215c145e8=======")
 	return req
 }
 
@@ -113,10 +118,23 @@ func UnmarshalResponse(resp *http.Response) (BaseResp, error) {
 
 func HttpReq(client *http.Client, method string, url string, req interface{}) (*BaseResp, error) {
 	buff := WrapReq2Buff(req)
-	// log.DebugLog("robot_handler", "ShopMoreHandler|Open|%s", buff.String())
-
+	log.DebugLog("robot_handler", "HttpReq|%s", buff.String())
 	httpreq := WrapBuff2HttpRequest(method, url, buff)
-	// fmt.Println(buff.String())
+	r, err := client.Do(httpreq)
+	if nil != err {
+		log.ErrorLog("robot_handler", "HttpReq|Try Open |FAIL|%s|%v", err, httpreq.PostForm)
+		return nil, err
+	}
+
+	resp, err := UnmarshalResponse(r)
+	if nil != err {
+		log.ErrorLog("robot_handler", "HttpReq|Try Open|UnmarshalResponse |FAIL|%s|%v", err, httpreq.PostForm)
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func HttpReqAndDecode(client *http.Client, httpreq *http.Request) (*BaseResp, error) {
 	r, err := client.Do(httpreq)
 	if nil != err {
 		log.ErrorLog("robot_handler", "HttpReq|Try Open |FAIL|%s|%v", err, httpreq.PostForm)
