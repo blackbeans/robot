@@ -10,5 +10,14 @@
 
     sh build.sh
     
-    ./robot -mobile=12322 -password=12344 -redis=localhost:6379
+    ./robot -mobile=12322 -password=12344 -redis=localhost:6379 -robotType=higo/ymt -message="hi"
+    
+### Note:
+    
+    可以通过绑定的redis中的zset结构获取当前已经发送广告的卖家ID
+    
+    洋码头  _ymt_send_message_
+    
+    Higo  _higo_group_followed
+      
     

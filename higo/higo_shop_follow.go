@@ -78,7 +78,7 @@ func (self *ShopFollowHandler) Process(ctx *pipe.DefaultPipelineContext, event p
 		if nil != err {
 			log.ErrorLog("robot_handler", "ShopFollowHandler|Follow|FAIL|%s|%s", err, resp.Data)
 		} else {
-			self.redisClient.ZAdd("_higo_group_followd", redis.Z{Score: float64(time.Now().Unix()), Member: ae.HigoGroupId})
+			self.redisClient.ZAdd("_higo_group_followed", redis.Z{Score: float64(time.Now().Unix()), Member: ae.HigoGroupId})
 			log.InfoLog("robot_handler", "ShopFollowHandler|Follow|SUCC|%d|%s", resp.Code, resp.Message)
 		}
 

@@ -2,6 +2,9 @@ package ymt
 
 import (
 	"encoding/json"
+	"strconv"
+
+	"gopkg.in/redis.v3"
 
 	"bytes"
 	"math"
@@ -52,14 +55,16 @@ type SellerActivityIdsResp struct {
 
 type ChannelHandler struct {
 	pipe.BaseForwardHandler
-	url string
+	url         string
+	redisClient *redis.Client
 }
 
-func NewChannelHandler(name, url string) *ChannelHandler {
+func NewChannelHandler(name, url string, redisClient *redis.Client) *ChannelHandler {
 
 	handler := &ChannelHandler{}
 	handler.url = url
 	handler.BaseForwardHandler = pipe.NewBaseForwardHandler(name, handler)
+	handler.redisClient = redisClient
 	return handler
 }
 
@@ -140,6 +145,13 @@ func (self *ChannelHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe
 									time.Sleep(2 * time.Second)
 									// log.InfoLog("robot_handler", "ChannelHandler|ListInProgressActivitiesByIds|SUCC|%v", sellerResp)
 									for _, seller := range sellerResp.Activities {
+
+										result := self.redisClient.ZScore("_ymt_send_message_", strconv.FormatInt(seller.SellerId, 10))
+										if err = result.Err(); nil == err && result.Val() > 0 {
+											//skipped
+											log.WarnLog("robot_handler", "ChannelHandler|SendMessage|SKIPPED|%v", seller)
+											continue
+										}
 
 										//send message
 										publishReq := &PublishReq{}

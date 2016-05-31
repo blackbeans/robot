@@ -39,8 +39,8 @@ func main() {
 		line.FireWork(req)
 	} else {
 		line.RegisteHandler("login", ymt.NewLoginHandler("login", "http://app.ymatou.com/api/Auth/LoginAuth"))
-		line.RegisteHandler("activities", ymt.NewChannelHandler("activities", "http://app.ymatou.com/api/activity/GetCountryGroupList"))
-		line.RegisteHandler("im", ymt.NewPublishHandler("im", "http://app.ymatou.com/api/Letter/AddMessage", *message))
+		line.RegisteHandler("activities", ymt.NewChannelHandler("activities", "http://app.ymatou.com/api/activity/GetCountryGroupList", redisclient))
+		line.RegisteHandler("im", ymt.NewPublishHandler("im", "http://app.ymatou.com/api/Letter/AddMessage", *message, redisclient))
 
 		req := &ymt.LoginReq{}
 		req.Username = *mobile

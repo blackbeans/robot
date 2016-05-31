@@ -99,7 +99,7 @@ func (self *ShopMoreHandler) Process(ctx *pipe.DefaultPipelineContext, event pip
 			} else {
 				for _, shop := range shopResp.HigoGroupIds {
 					//check group has been followed
-					result := self.redisClient.ZScore("_higo_group_followd", shop.HigoGroupId)
+					result := self.redisClient.ZScore("_higo_group_followed", shop.HigoGroupId)
 					if err = result.Err(); nil == err && result.Val() > 0 {
 						//skipped
 						log.WarnLog("robot_handler", "ShopMoreHandler|Followed|SKIPPED|%s", shop.HigoGroupId)
