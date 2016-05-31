@@ -23,8 +23,8 @@ func TestPublishHandler(t *testing.T) {
 	line.RegisteHandler("im", NewPublishHandler("im", "http://app.ymatou.com/api/Letter/AddMessage", "hi", redisclient))
 
 	req := &LoginReq{}
-	req.Username = "18612372884"
-	req.Password = "0301151313"
+	req.Username = ""
+	req.Password = ""
 	line.FireWork(req)
 	time.Sleep(2 * time.Second)
 
