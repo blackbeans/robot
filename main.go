@@ -18,6 +18,7 @@ func main() {
 	password := flag.String("password", "", "-password=1234")
 	robotType := flag.String("robotType", "higo", "-robotType=higo or ymt")
 	message := flag.String("message", "", "-message=hi")
+	mod := flag.Int("channelmod", 0, "-channelmod=0")
 
 	flag.Parse()
 	log.LoadConfiguration("./log.xml")
@@ -27,7 +28,7 @@ func main() {
 	if *robotType == "higo" {
 
 		line.RegisteHandler("login", higo.NewLoginHandler("login", "http://v.lehe.com/account/login"))
-		line.RegisteHandler("shop_channel", higo.NewChannelHandler("shop_channel", "http://v.lehe.com/shop/get_dimensions"))
+		line.RegisteHandler("shop_channel", higo.NewChannelHandler("shop_channel", "http://v.lehe.com/shop/get_dimensions", *mod))
 		line.RegisteHandler("shop_more", higo.NewShopMoreHandler("shop_more", "http://v.lehe.com/shop/get_more", redisclient))
 		line.RegisteHandler("shop_follow", higo.NewShopFollowHandler("shop_follow", "http://im.lehe.com/im/open_group_add", redisclient))
 

@@ -2,9 +2,9 @@ package higo
 
 import (
 	"encoding/json"
-
 	log "github.com/blackbeans/log4go"
 	"github.com/blackbeans/turbo/pipe"
+	"strconv"
 )
 
 //shop more  请求
@@ -25,13 +25,16 @@ type ChannelResp struct {
 
 type ChannelHandler struct {
 	pipe.BaseForwardHandler
-	url string
+	url        string
+	channelMod int
 }
 
-func NewChannelHandler(name, url string) *ChannelHandler {
+func NewChannelHandler(name, url string, channelMod int) *ChannelHandler {
 
 	handler := &ChannelHandler{}
 	handler.url = url
+	handler.channelMod = channelMod
+
 	handler.BaseForwardHandler = pipe.NewBaseForwardHandler(name, handler)
 	return handler
 }
@@ -68,11 +71,16 @@ func (self *ChannelHandler) Process(ctx *pipe.DefaultPipelineContext, event pipe
 			for _, channel := range channelResp.Channels {
 				//crawl channel shop
 				// shopMore
-				shopMore := &ShopMoreReq{}
-				shopMore.ctx = ae.ctx
-				shopMore.ID = channel.ID
-				log.InfoLog("robot_handler", "ChannelHandler|Start Channel|%s|%s", channel.ID, channel.ChannelName)
-				ctx.SendForward(shopMore)
+				v, _ := strconv.Atoi(channel.ID[len(channel.ID)-1:])
+				v = v % 2
+				if v == self.channelMod {
+					shopMore := &ShopMoreReq{}
+					shopMore.ctx = ae.ctx
+					shopMore.ID = channel.ID
+					log.InfoLog("robot_handler", "ChannelHandler|Start Channel|%s|%s", channel.ID, channel.ChannelName)
+					ctx.SendForward(shopMore)
+
+				}
 			}
 		}
 
